@@ -182,11 +182,38 @@ fn main() {
 
 `Recognizable` is a trait that allows you to recognize a pattern. But most of the time you want to recognize a succession of patterns.
 
-Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tries to determine wether the pattern is present or not.
+Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tries to determine whether the pattern is present or not.
+
+```rust
+/// A `Visitor` is a trait that allows to define how to visit a `Scanner`.
+///
+/// When a `Visitor` is used on a `Scanner`, it will consume the input from the
+/// scanner and return the result of the visit.
+///
+/// # Type Parameters
+///
+/// * `T` - The type of the data to visit.
+///
+/// # Associated Functions
+///
+/// * `accept` - Try to accept the `Scanner` and return the result of the visit.
+pub trait Visitor<'a, T>: Sized {
+    /// Try to accept the `Scanner` and return the result of the visit.
+    ///
+    /// # Arguments
+    ///
+    /// * `scanner` - The scanner to accept.
+    ///
+    /// # Returns
+    ///
+    /// The result of the visit.
+    fn accept(scanner: &mut Scanner<'a, T>) -> ParseResult<Self>;
+}
+```
 
 But, unlike `Recognizable`, you can call a `Visitor` inside another `Visitor` to detect more complex patterns.
 
-For example "::<45>", the data wanted are the number "45", but embedded in the turbofish operator.
+For example, "::<45>", the data wanted are the number "45", but embedded in the turbofish operator.
 
 Because recognizing numbers is a common operation, the framework provides a builtin `Number` object which implements `Visitor` to recognize a number.
 
