@@ -23,7 +23,7 @@ Parsers only use most of the operations internally.
 ```rust
 use noa_parser::scanner::Scanner;
 fn main() {
-    let data = "hello world";
+    let data = b"hello world";
     let mut scanner = Scanner::new(data);
 }
 ```
@@ -96,7 +96,7 @@ impl MatchSize for Turbofish {
 }
 
 fn main() {
-    let data = "::<>b".chars().collect::<[char; 4]>();
+    let data = [':', ':', '<', '>'];
     let mut scanner = noa_parser::scanner::Scanner::new(&data);
     let result = Turbofish.matcher(&mut scanner);
     println!("{:?}", result);
@@ -118,6 +118,9 @@ Because it's a common operation, the framework provides a builtin function to do
 As soon an object implements `Match` and `MatchSize`, it also implements `Recognizable` and can be used to recognize a number.
 
 ```rust
+use noa_parser::matcher::MatchSize;
+use noa_parser::scanner::Scanner;
+use noa_parser::errors::ParseResult;
 pub trait Recognizable<'a, T, V>: MatchSize {
     /// Try to recognize the object for the given scanner.
     ///
@@ -183,6 +186,9 @@ fn main() {
 Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tries to determine whether the pattern is present or not.
 
 ```rust
+use noa_parser::matcher::MatchSize;
+use noa_parser::scanner::Scanner;
+use noa_parser::errors::ParseResult;
 /// A `Visitor` is a trait that allows to define how to visit a `Scanner`.
 ///
 /// When a `Visitor` is used on a `Scanner`, it will consume the input from the
@@ -256,6 +262,13 @@ fn main() {
 If you want you can embed the turbofish operator start pattern inside its own `Visitor`.
 
 ```rust
+use noa_parser::visitor::Visitor;
+use noa_parser::scanner::Scanner;
+use noa_parser::errors::ParseResult;
+use noa_parser::recognizer::recognize;
+use noa_parser::bytes::token::Token;
+use noa_parser::bytes::primitives::number::Number;
+
 #[derive(Debug)]
 struct Turbofish(usize);
 
@@ -391,7 +404,7 @@ Because of rust, all your results must be of the same type. So is a union as the
 
 Here:
 
-```rust
+```rust,ignore
 enum ColorInternal {
     Rgb(RgbColor),
     Hex(HexColor),
@@ -401,7 +414,7 @@ enum ColorInternal {
 
 Then define the visitable types:
 
-```rust
+```rust,ignore
 #[derive(Debug)]
 struct RgbColor(u8, u8, u8);
 #[derive(Debug)]
@@ -411,7 +424,7 @@ struct TupleColor(u8, u8, u8);
 
 To implement their `Visitor`:
 
-```rust
+```rust,ignore
 impl<'a> Visitor<'a, u8> for TupleColor {
     fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
         // recognize the rgb color start "("
@@ -479,7 +492,7 @@ impl<'a> Visitor<'a, u8> for HexColor {
 
 Then define the output `Color` type:
 
-```rust
+```rust,ignore
 #[derive(Debug)]
 pub struct Color(u8, u8, u8);
 
@@ -496,7 +509,7 @@ impl From<ColorInternal> for Color {
 
 And finally define the `Color` visitor:
 
-```rust
+```rust,ignore
 impl<'a> Visitor<'a, u8> for Color {
     fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
         let color = Acceptor::new(scanner)
