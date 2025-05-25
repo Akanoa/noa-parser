@@ -1,3 +1,5 @@
+//! A visitor is a trait that allows to define how to visit a `Scanner`.
+
 use crate::errors::ParseResult;
 use crate::scanner::Scanner;
 

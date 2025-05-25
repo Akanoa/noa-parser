@@ -1,8 +1,15 @@
+//! Defines how to recognize an object.
+
 use crate::errors::{ParseError, ParseResult};
 use crate::matcher::{Match, MatchSize};
 use crate::scanner::Scanner;
 
-/// Describes a recognizable object.
+/// A trait that defines how to recognize an object.
+///
+/// # Type Parameters
+/// * `V` - The type of the object to recognize
+/// * `T` - The type of the data to scan
+/// * `'a` - The lifetime of the data to scan
 pub trait Recognizable<'a, T, V>: MatchSize {
     /// Try to recognize the object for the given scanner.
     ///

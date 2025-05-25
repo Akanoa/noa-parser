@@ -1,3 +1,4 @@
+//! Binary operators
 use crate::acceptor::Acceptor;
 use crate::bytes::token::Token;
 use crate::errors::{ParseError, ParseResult};

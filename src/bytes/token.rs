@@ -1,3 +1,5 @@
+//! Classic tokens
+
 use crate::bytes::matchers::match_char;
 use crate::matcher::{Match, MatchSize};
 
