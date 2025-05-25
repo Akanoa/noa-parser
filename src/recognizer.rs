@@ -1,5 +1,5 @@
 use crate::errors::{ParseError, ParseResult};
-use crate::matcher::{MatchSize};
+use crate::matcher::MatchSize;
 use crate::scanner::Scanner;
 
 /// Describes a recognizable object.
@@ -46,5 +46,7 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
     if recognizable.size() > scanner.remaining().len() {
         return Err(ParseError::UnexpectedEndOfInput);
     }
-    recognizable.recognize(scanner)?.ok_or(ParseError::UnexpectedToken)
+    recognizable
+        .recognize(scanner)?
+        .ok_or(ParseError::UnexpectedToken)
 }
