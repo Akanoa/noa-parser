@@ -15,6 +15,7 @@ keywords = [
     "lexer",
     "tokenizer",
 ]
+license-file = "LICENSE"
 
 [dependencies]
 thiserror = "2.0.12"
