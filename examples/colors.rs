@@ -94,6 +94,7 @@ impl<'a> Visitor<'a, u8> for HexColor {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Color(u8, u8, u8);
 
 impl<'a> Visitor<'a, u8> for Color {

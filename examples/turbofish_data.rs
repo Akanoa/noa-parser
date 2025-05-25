@@ -5,6 +5,7 @@ use noa_parser::recognizer::recognize;
 use noa_parser::visitor::Visitor;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Turbofish(usize);
 
 // Implement the `Visitor` trait for the turbofish operator.

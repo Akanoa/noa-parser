@@ -6,6 +6,7 @@ use noa_parser::scanner::Scanner;
 use noa_parser::visitor::Visitor;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Turbofish(usize);
 
 struct TurbofishStartTokens;

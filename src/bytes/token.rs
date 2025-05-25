@@ -1,8 +1,5 @@
 use crate::bytes::matchers::match_char;
-use crate::errors::ParseResult;
 use crate::matcher::{Match, MatchSize};
-use crate::recognizer::Recognizable;
-use crate::scanner::Scanner;
 
 /// The token type
 pub enum Token {

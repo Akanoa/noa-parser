@@ -38,6 +38,7 @@ impl Visitor<'_, u8> for Number {
 
 /// Define the addition expression.
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Addition {
     rhs: usize,
     lhs: usize,

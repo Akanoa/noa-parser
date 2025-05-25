@@ -118,40 +118,40 @@ mod tests {
     #[test]
     fn test_match_char() {
         let (result, consumed) = match_char('a', b"abc");
-        assert_eq!(result, true);
+        assert!(result);
         assert_eq!(consumed, 1);
 
         let (result, consumed) = match_char('b', b"abc");
-        assert_eq!(result, false);
+        assert!(!result);
         assert_eq!(consumed, 1);
     }
 
     #[test]
     fn test_match_pattern() {
         let (result, consumed) = match_pattern(b"abc", b"abcdef");
-        assert_eq!(result, true);
+        assert!(result);
         assert_eq!(consumed, 3);
 
         let (result, consumed) = match_pattern(b"abc", b"bbcdefg");
-        assert_eq!(result, false);
+        assert!(!result);
         assert_eq!(consumed, 0);
     }
 
     #[test]
     fn test_match_number() {
         let (result, consumed) = match_number(b"123abc");
-        assert_eq!(result, true);
+        assert!(result);
         assert_eq!(consumed, 3);
 
         let (result, consumed) = match_number(b"abc123");
-        assert_eq!(result, false);
+        assert!(!result);
         assert_eq!(consumed, 0);
     }
 
     #[test]
     fn test_match_string() {
         let (result, consumed) = match_string(b"abc123(");
-        assert_eq!(result, true);
+        assert!(result);
         assert_eq!(consumed, 6);
     }
 }

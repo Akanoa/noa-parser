@@ -53,7 +53,7 @@ pub enum PeekResult<S, E> {
 /// # Required Methods
 ///
 /// * `peek` - Attempts to match the `Peekable` against the current position of
-/// the `Scanner`.
+///   the `Scanner`.
 pub trait Peekable<'a, T, S, E> {
     /// Attempt to match the `Peekable` against the current position of the
     /// `Scanner`.
