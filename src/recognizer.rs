@@ -55,13 +55,12 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
 /// Return a slice of the recognized object.
 impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, &'a [T]> for M {
     fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<&'a [T]>> {
-
         if scanner.is_empty() {
             return Err(ParseError::UnexpectedEndOfInput);
         }
 
         let data = scanner.remaining();
-        
+
         let (result, size) = self.matcher(data);
         if !result {
             return Ok(None);

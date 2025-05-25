@@ -179,3 +179,94 @@ fn main() {
 ```
 
 ## Visitor
+
+`Recognizable` is a trait that allows you to recognize a pattern. But most of the time you want to recognize a succession of patterns.
+
+Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tries to determine wether the pattern is present or not.
+
+But, unlike `Recognizable`, you can call a `Visitor` inside another `Visitor` to detect more complex patterns.
+
+For example "::<45>", the data wanted are the number "45", but embedded in the turbofish operator.
+
+Because recognizing numbers is a common operation, the framework provides a builtin `Number` object which implements `Visitor` to recognize a number.
+
+So to recognize a turbofish value, you have to recognize the start of the turbofish operator "::<", then the number, and then the end of the turbofish operator ">".
+
+The recognition of the number is done by calling the `accept` method of the `Number` object.
+
+```rust
+use noa_parser::bytes::primitives::number::Number;
+use noa_parser::bytes::token::Token;
+use noa_parser::errors::ParseResult;
+use noa_parser::recognizer::recognize;
+use noa_parser::visitor::Visitor;
+
+#[derive(Debug)]
+struct Turbofish(usize);
+
+// Implement the `Visitor` trait for the turbofish operator.
+impl<'a> Visitor<'a, u8> for Turbofish {
+    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+        // recognize the turbofish operator start "::<".
+        recognize(Token::Colon, scanner)?;
+        recognize(Token::Colon, scanner)?;
+        recognize(Token::LessThan, scanner)?;
+        // recognize the number
+        let number = Number::accept(scanner)?.0;
+        // recognize the turbofish operator end ">"
+        recognize(Token::GreaterThan, scanner)?;
+        Ok(Turbofish(number))
+    }
+}
+
+
+fn main() {
+    let data = b"::<45>garbage";
+    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let result = Turbofish::accept(&mut scanner);
+    println!("{:?}", result); // Ok(Turbofish(45))
+}
+```
+
+If you want you can embed the turbofish operator start pattern inside its own `Visitor`.
+
+```rust
+#[derive(Debug)]
+struct Turbofish(usize);
+
+struct TurbofishStartTokens;
+
+// Implement the `Visitor` trait for the turbofish operator start tokens.
+impl <'a> Visitor<'a, u8> for TurbofishStartTokens {
+    fn accept(scanner: &mut Scanner<'a, u8>) -> ParseResult<Self> {
+        // recognize the turbofish operator start "::<".
+        recognize(Token::Colon, scanner)?;
+        recognize(Token::Colon, scanner)?;
+        recognize(Token::LessThan, scanner)?;
+        Ok(TurbofishStartTokens)
+    }
+}
+
+// Implement the `Visitor` trait for the turbofish operator.
+impl<'a> Visitor<'a, u8> for Turbofish {
+    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+        // recognize the turbofish operator start "::<".
+        TurbofishStartTokens::accept(scanner)?;
+        // recognize the number
+        let number = Number::accept(scanner)?.0;
+        // recognize the turbofish operator end ">"
+        recognize(Token::GreaterThan, scanner)?;
+        Ok(Turbofish(number))
+    }
+}
+
+
+fn main() {
+    let data = b"::<45>garbage";
+    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let result = Turbofish::accept(&mut scanner);
+    println!("{:?}", result); // Ok(Turbofish(45))
+}
+```
+
+There is no limit of embedding depth.
