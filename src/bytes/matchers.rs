@@ -1,3 +1,4 @@
+//! Byte slice matchers.
 /// Attempt to match a single character against a byte slice.
 ///
 /// # Arguments
@@ -100,7 +101,7 @@ pub fn match_string(data: &[u8]) -> (bool, usize) {
         if pos == data.len() {
             break;
         }
-        if !data[pos].is_ascii_punctuation() {
+        if !data[pos].is_ascii_punctuation() && !data[pos].is_ascii_whitespace() {
             pos += 1;
             found = true;
             continue;

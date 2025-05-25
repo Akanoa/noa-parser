@@ -1,3 +1,4 @@
+//! Error types
 /// The result of a parse operation
 pub type ParseResult<T> = Result<T, ParseError>;
 

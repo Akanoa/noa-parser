@@ -1,3 +1,5 @@
+//! Define the number token and its acceptor.
+
 use crate::bytes::matchers::match_number;
 use crate::errors::ParseResult;
 use crate::matcher::{Match, MatchSize};

@@ -1,3 +1,5 @@
+//! A helper type for scanning and accepting values.
+
 use crate::errors::{ParseError, ParseResult};
 use crate::scanner::Scanner;
 use crate::visitor::Visitor;

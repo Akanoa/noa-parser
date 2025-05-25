@@ -1,10 +1,14 @@
+//! A scanner for a sequence of elements.
+
 use crate::errors::ParseResult;
 use crate::visitor::Visitor;
 use std::io::Cursor;
 use std::ops::Deref;
 
+/// Wrapper around a `Cursor`.
 #[derive(Debug, PartialEq)]
 pub struct Scanner<'a, T> {
+    /// The internal cursor.
     cursor: Cursor<&'a [T]>,
 }
 

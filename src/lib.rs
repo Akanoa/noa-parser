@@ -1,3 +1,5 @@
+
+#![doc = include_str!("../Readme.md")]
 pub mod acceptor;
 pub mod bytes;
 pub mod errors;

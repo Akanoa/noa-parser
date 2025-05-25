@@ -1,3 +1,5 @@
+//! String primitives
+
 use crate::bytes::matchers::match_string;
 use crate::errors::ParseResult;
 use crate::matcher::{Match, MatchSize};
