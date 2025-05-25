@@ -94,7 +94,7 @@ impl MatchSize for Turbofish {
 }
 
 fn main() {
-    let data = "::<>b".chars().collect::<Vec<char>>();
+    let data = "::<>b".chars().collect::<[char; 4]>();
     let mut scanner = noa_parser::scanner::Scanner::new(&data);
     let result = Turbofish.matcher(&mut scanner);
     println!("{:?}", result);

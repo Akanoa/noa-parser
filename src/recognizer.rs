@@ -1,5 +1,5 @@
 use crate::errors::{ParseError, ParseResult};
-use crate::matcher::MatchSize;
+use crate::matcher::{Match, MatchSize};
 use crate::scanner::Scanner;
 
 /// Describes a recognizable object.
@@ -49,4 +49,29 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
     recognizable
         .recognize(scanner)?
         .ok_or(ParseError::UnexpectedToken)
+}
+
+/// Recognize an object for the given scanner.
+/// Return a slice of the recognized object.
+impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, &'a [T]> for M {
+    fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<&'a [T]>> {
+
+        if scanner.is_empty() {
+            return Err(ParseError::UnexpectedEndOfInput);
+        }
+
+        let data = scanner.remaining();
+        
+        let (result, size) = self.matcher(data);
+        if !result {
+            return Ok(None);
+        }
+        let curent_position = scanner.current_position();
+        if !scanner.is_empty() {
+            scanner.bump_by(size);
+        }
+        Ok(Some(
+            &scanner.data()[curent_position..curent_position + size],
+        ))
+    }
 }

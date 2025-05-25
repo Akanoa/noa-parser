@@ -73,19 +73,3 @@ impl MatchSize for Token {
         }
     }
 }
-
-impl<'a> Recognizable<'a, u8, &'a [u8]> for Token {
-    fn recognize(self, scanner: &mut Scanner<'a, u8>) -> ParseResult<Option<&'a [u8]>> {
-        let (result, size) = scanner.recognize(self)?;
-        if !result {
-            return Ok(None);
-        }
-        let current_position = scanner.current_position();
-        if !scanner.is_empty() {
-            scanner.bump_by(size);
-        }
-        Ok(Some(
-            &scanner.data()[current_position..current_position + size],
-        ))
-    }
-}

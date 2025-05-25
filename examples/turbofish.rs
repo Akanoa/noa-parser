@@ -28,8 +28,13 @@ impl MatchSize for Turbofish {
 }
 
 fn main() {
-    let data = "::<>b".chars().collect::<Vec<char>>();
+    let data = [':', ':', '<', '>', 'b'];
     let mut scanner = noa_parser::scanner::Scanner::new(&data);
     let result = Turbofish.matcher(&mut scanner);
-    println!("{:?}", result);
+    println!("{:?}", result); // ( true, 4 ) because the turbofish operator is 4 char
+
+    let data = ['a', ':', ':', '<', '>', 'b'];
+    let mut scanner = noa_parser::scanner::Scanner::new(&data);
+    let result = Turbofish.matcher(&mut scanner);
+    println!("{:?}", result); // ( false, 0 ) because doesn't match the turbofish operator
 }

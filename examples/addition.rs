@@ -23,23 +23,6 @@ impl MatchSize for TokenNumber {
     }
 }
 
-/// Define how to recognize the token number.
-impl<'a> Recognizable<'a, u8, &'a [u8]> for TokenNumber {
-    fn recognize(self, scanner: &mut Scanner<'a, u8>) -> ParseResult<Option<&'a [u8]>> {
-        let (result, size) = scanner.recognize(self)?;
-        if !result {
-            return Ok(None);
-        }
-        let curent_position = scanner.current_position();
-        if !scanner.is_empty() {
-            scanner.bump_by(size);
-        }
-        Ok(Some(
-            &scanner.data()[curent_position..curent_position + size],
-        ))
-    }
-}
-
 /// Define how to accept the token number.
 struct Number(usize);
 
