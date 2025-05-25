@@ -20,7 +20,7 @@ jobs:
       run: cargo test --verbose
 
   publish:
-    if: github.event_name == 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' && github.ref == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions-rs/toolchain@v1
