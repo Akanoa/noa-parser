@@ -8,7 +8,7 @@ documentation = "https://docs.rs/noa-parser"
 authors = [
     "Akanoa <dev@guern.eu>"
 ]
-description = "**Noa parser** is an extensible general purpose framework parser allowing to parser any type of data without allocation."
+description = "Noa parser is an extensible general purpose framework parser allowing to parser any type of data without allocation."
 publish = true
 keywords = [
     "parser",
@@ -16,6 +16,7 @@ keywords = [
     "tokenizer",
 ]
 license-file = "LICENSE"
+readme = "Readme.md"
 
 [dependencies]
 thiserror = "2.0.12"
