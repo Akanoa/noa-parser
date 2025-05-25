@@ -1,8 +1,6 @@
 # Noa parser
 
-Is a general purpose framework parser allowing to parser any type of data without allocation.
-
-It provides some primitives. But can be extended with custom definitions.
+Is an extensible general purpose framework parser allowing to parser any type of data without allocation.
 
 ## Scanner
 
