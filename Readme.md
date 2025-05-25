@@ -2,7 +2,7 @@
 
 Is a general purpose framework parser allowing to parser any type of data without allocation.
 
-It provides some primitives.
+It provides some primitives. But can be extended with custom definitions.
 
 ## Scanner
 
@@ -61,7 +61,11 @@ pub trait MatchSize {
 
 For example, if you want to recognize the turbofish pattern "::<>". 
 
-You want that all characters are matched.
+You want that all characters to be matched.
+
+To achieve, we need an object that implements `Match` and `MatchSize`.
+
+Here the object will be the `Turbofish` struct.
 
 ```rust
 use noa_parser::matcher::{Match, MatchSize};
@@ -98,6 +102,79 @@ fn main() {
     let mut scanner = noa_parser::scanner::Scanner::new(&data);
     let result = Turbofish.matcher(&mut scanner);
     println!("{:?}", result);
+}
+```
+
+## Recognizable
+
+Once you have an object that implements `Match` and `MatchSize`, you can use it to recognize a pattern.
+
+For static data it's not that useful, but for something with not defined it can be interesting.
+
+You want to recognize a number.
+
+You need an object able to match a sequence of digits.
+
+Because it's a common operation, the framework provides a builtin function to do it: `match_number`.
+
+As soon an object implements `Match` and `MatchSize`, it also implements `Recognizable` and can be used to recognize a number.
+
+```rust
+pub trait Recognizable<'a, T, V>: MatchSize {
+    /// Try to recognize the object for the given scanner.
+    ///
+    /// # Type Parameters
+    /// V - The type of the object to recognize
+    ///
+    /// # Arguments
+    /// * `scanner` - The scanner to recognize the object for.
+    ///
+    /// # Returns
+    /// * `Ok(Some(V))` if the object was recognized,
+    /// * `Ok(None)` if the object was not recognized,
+    /// * `Err(ParseError)` if an error occurred
+    ///
+    fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<V>>;
+}
+```
+
+### Usage
+
+```rust
+use noa_parser::bytes::matchers::match_number;
+use noa_parser::matcher::{Match, MatchSize};
+use noa_parser::recognizer::Recognizable;
+
+struct TokenNumber;
+
+/// Implement the `Match` trait for the token number.
+impl Match<u8> for TokenNumber {
+    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+        match_number(data)
+    }
+}
+
+/// Implement the `MatchSize` trait for the token number.
+impl MatchSize for TokenNumber {
+    fn size(&self) -> usize {
+        // The size of the token number is 0 because it's not defined
+        0
+    }
+}
+
+fn main() {
+    let data = b"123abc";
+    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let result = TokenNumber.recognize(&mut scanner);
+    println!("{:?}", result); // Ok(Some([49, 50, 51]))
+    // If the result is successful
+    if let Ok(Some(data)) = result {
+        // Convert the data to a string
+        let str_data = std::str::from_utf8(data).unwrap();
+        // Convert the string to a number
+        let result = str_data.parse::<usize>().unwrap();
+        println!("{}", result); // 123
+    }
 }
 ```
 
