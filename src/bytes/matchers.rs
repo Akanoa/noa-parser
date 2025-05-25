@@ -73,9 +73,47 @@ pub fn match_number(data: &[u8]) -> (bool, usize) {
     (found, pos)
 }
 
+/// Attempt to match a string against a byte slice.
+/// Stop matching when a punctuation character is encountered.
+///  * U+0021 ..= U+002F ! " # $ % & ' ( ) * + , - . /, or
+///  * U+003A ..= U+0040 : ; < = > ? @, or
+///  * U+005B ..= U+0060 [ \ ] ^ _ `, or
+///  * U+007B ..= U+007E { | } ~
+///
+/// # Arguments
+///
+/// * `data` - The byte slice to match against.
+///
+/// # Returns
+///
+/// A tuple containing a boolean indicating whether the match succeeded and
+/// the number of bytes consumed if the match succeeded.
+pub fn match_string(data: &[u8]) -> (bool, usize) {
+    if data.is_empty() {
+        return (false, 0);
+    }
+
+    let mut pos = 0;
+    let mut found = false;
+
+    loop {
+        if pos == data.len() {
+            break;
+        }
+        if !data[pos].is_ascii_punctuation() {
+            pos += 1;
+            found = true;
+            continue;
+        }
+        break;
+    }
+
+    (found, pos)
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::bytes::matchers::{match_char, match_number, match_pattern};
+    use crate::bytes::matchers::{match_char, match_number, match_pattern, match_string};
 
     #[test]
     fn test_match_char() {
@@ -108,5 +146,12 @@ mod tests {
         let (result, consumed) = match_number(b"abc123");
         assert_eq!(result, false);
         assert_eq!(consumed, 0);
+    }
+
+    #[test]
+    fn test_match_string() {
+        let (result, consumed) = match_string(b"abc123(");
+        assert_eq!(result, true);
+        assert_eq!(consumed, 6);
     }
 }

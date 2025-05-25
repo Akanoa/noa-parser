@@ -57,7 +57,7 @@ impl<'a, T, V> Acceptor<'a, '_, T, V> {
     /// `data` is left `None`.
     pub fn try_or<U: Visitor<'a, T>, F>(mut self, transformer: F) -> ParseResult<Self>
     where
-        F: Fn(U) -> ParseResult<V>,
+        F: Fn(U) -> V,
     {
         let cursor = self.scanner.current_position();
         // Propagate the data
@@ -67,7 +67,7 @@ impl<'a, T, V> Acceptor<'a, '_, T, V> {
 
         match U::accept(self.scanner) {
             Ok(found) => {
-                self.data = Some(transformer(found)?);
+                self.data = Some(transformer(found));
             }
             Err(ParseError::UnexpectedToken) => {
                 self.scanner.jump_to(cursor);

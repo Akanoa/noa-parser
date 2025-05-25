@@ -32,6 +32,38 @@ pub enum Token {
     Equal,
     /// The `+` character
     Plus,
+    /// The `-` character
+    Dash,
+    /// The `/` character
+    Slash,
+    /// The `*` character
+    Star,
+    /// The `%` character
+    Percent,
+    /// The `&` character
+    Ampersand,
+    /// The `|` character
+    Pipe,
+    /// The `^` character
+    Caret,
+    /// The `~` character
+    Tilde,
+    /// The `.` character
+    Dot,
+    /// The `?` character
+    Question,
+    /// The `@` character
+    At,
+    /// The `#` character
+    Hash,
+    /// The `$` character
+    Dollar,
+    /// The `\\` character
+    Backslash,
+    /// The `_` character
+    Underscore,
+    /// The `#` character
+    Sharp,
 }
 
 impl Match<u8> for Token {
@@ -50,6 +82,22 @@ impl Match<u8> for Token {
             Token::DoubleQuote => match_char('"', data),
             Token::Equal => match_char('=', data),
             Token::Plus => match_char('+', data),
+            Token::Dash => match_char('-', data),
+            Token::Slash => match_char('/', data),
+            Token::Star => match_char('*', data),
+            Token::Percent => match_char('%', data),
+            Token::Ampersand => match_char('&', data),
+            Token::Pipe => match_char('|', data),
+            Token::Caret => match_char('^', data),
+            Token::Tilde => match_char('~', data),
+            Token::Dot => match_char('.', data),
+            Token::Question => match_char('?', data),
+            Token::At => match_char('@', data),
+            Token::Hash => match_char('#', data),
+            Token::Dollar => match_char('$', data),
+            Token::Backslash => match_char('\\', data),
+            Token::Underscore => match_char('_', data),
+            Token::Sharp => match_char('#', data),
         }
     }
 }
@@ -70,6 +118,22 @@ impl MatchSize for Token {
             Token::DoubleQuote => 1,
             Token::Equal => 1,
             Token::Plus => 1,
+            Token::Dash => 1,
+            Token::Slash => 1,
+            Token::Star => 1,
+            Token::Percent => 1,
+            Token::Ampersand => 1,
+            Token::Pipe => 1,
+            Token::Caret => 1,
+            Token::Tilde => 1,
+            Token::Dot => 1,
+            Token::Question => 1,
+            Token::At => 1,
+            Token::Hash => 1,
+            Token::Dollar => 1,
+            Token::Backslash => 1,
+            Token::Underscore => 1,
+            Token::Sharp => 1,
         }
     }
 }

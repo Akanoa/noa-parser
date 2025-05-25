@@ -297,3 +297,234 @@ fn main() {
 ```
 
 There is no limit of embedding depth.
+
+## Match alternatives
+
+Sometimes your parsing path will branch between two or more paths.
+
+You may need to recognize an operator, for example.
+
+The `Recognizer` allows to check multiple patterns.
+
+```rust
+use noa_parser::bytes::matchers::match_pattern;
+use noa_parser::errors::{ParseError, ParseResult};
+use noa_parser::matcher::{Match, MatchSize};
+use noa_parser::recognizer::Recognizer;
+use noa_parser::scanner::Scanner;
+
+enum OperatorTokens {
+    /// The `==` operator.
+    Equal,
+    /// The `!=` operator.
+    NotEqual,
+}
+
+impl Match<u8> for OperatorTokens {
+    fn matcher(&self, data: &[u8]) -> (bool, usize) {
+        match self {
+            OperatorTokens::Equal => match_pattern(b"==", data),
+            OperatorTokens::NotEqual => match_pattern(b"!=", data),
+        }
+    }
+}
+
+impl MatchSize for OperatorTokens {
+    fn size(&self) -> usize {
+        match self {
+            OperatorTokens::Equal => 2,
+            OperatorTokens::NotEqual => 2,
+        }
+    }
+}
+
+fn main() -> ParseResult<()> {
+    let data = b"== 2";
+    let mut scanner = Scanner::new(data);
+    let recognized = Recognizer::new(&mut scanner)
+        .try_or(OperatorTokens::NotEqual)?
+        .try_or(OperatorTokens::Equal)?
+        .finish()
+        .ok_or(ParseError::UnexpectedToken)?;
+    
+    println!("{}", String::from_utf8_lossy(recognized)); // ==
+
+    let data = b"!= 2";
+    let mut scanner = Scanner::new(data);
+    let recognized = Recognizer::new(&mut scanner)
+        .try_or(OperatorTokens::NotEqual)?
+        .try_or(OperatorTokens::Equal)?
+        .finish()
+        .ok_or(ParseError::UnexpectedToken)?;
+
+    println!("{}", String::from_utf8_lossy(recognized)); // !=
+
+    let data = b"> 2";
+    let mut scanner = Scanner::new(data);
+    let recognized = Recognizer::new(&mut scanner)
+        .try_or(OperatorTokens::NotEqual)?
+        .try_or(OperatorTokens::Equal)?
+        .finish()
+        .ok_or(ParseError::UnexpectedToken);
+
+    println!("{:?}", recognized); // error (UnexpectedToken)
+
+    Ok(())
+}
+
+```
+
+## Accept alternatives
+
+When the recognizer is not enough, you need to check several visitors.
+
+That's the purpose of the `Acceptor` object.
+
+For example, colors can be defined in different ways.
+- #ff0000
+- (255, 0, 0)
+- rgb(255, 0, 0)
+
+If your parser wants to accept every pattern, you must test them successively then stop at the first matching pattern.
+
+To achieve this, the framework provides an object called `Acceptor` which takes several `Visitor`.
+
+Because of rust, all your results must be of the same type. So is a union as the form of an enumeration of visitable types.
+
+Here:
+
+```rust
+enum ColorInternal {
+    Rgb(RgbColor),
+    Hex(HexColor),
+    Tuple(TupleColor),
+}
+```
+
+Then define the visitable types:
+
+```rust
+#[derive(Debug)]
+struct RgbColor(u8, u8, u8);
+#[derive(Debug)]
+struct HexColor(u8, u8, u8);
+struct TupleColor(u8, u8, u8);
+```
+
+To implement their `Visitor`:
+
+```rust
+impl<'a> Visitor<'a, u8> for TupleColor {
+    fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
+        // recognize the rgb color start "("
+        recognize(Token::OpenParen, scanner)?;
+        // recognize the red number
+        let red = Number::accept(scanner)?.0;
+        // recognize the comma
+        recognize(Token::Comma, scanner)?;
+        recognize(Token::Whitespace, scanner)?;
+        // recognize the green number
+        let green = Number::accept(scanner)?.0;
+        // recognize the comma
+        recognize(Token::Comma, scanner)?;
+        recognize(Token::Whitespace, scanner)?;
+        // recognize the blue number
+        let blue = Number::accept(scanner)?.0;
+        // recognize the rgb color end ")"
+        recognize(Token::CloseParen, scanner)?;
+        Ok(TupleColor(red, green, blue))
+    }
+}
+
+impl<'a> Visitor<'a, u8> for RgbColor {
+    fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
+        // built-in visitor allows to recognize any string until punctuation
+        let prefix = DataString::<&str>::accept(scanner)?.0;
+
+        if prefix != "rgb" {
+            return Err(UnexpectedToken);
+        }
+
+        // recognize the rgb color start "("
+        recognize(Token::OpenParen, scanner)?;
+        // recognize the red number
+        let red = Number::accept(scanner)?.0;
+        // recognize the comma
+        recognize(Token::Comma, scanner)?;
+        recognize(Token::Whitespace, scanner)?;
+        // recognize the green number
+        let green = Number::accept(scanner)?.0;
+        // recognize the comma
+        recognize(Token::Comma, scanner)?;
+        recognize(Token::Whitespace, scanner)?;
+        // recognize the blue number
+        let blue = Number::accept(scanner)?.0;
+        // recognize the rgb color end ")"
+        recognize(Token::CloseParen, scanner)?;
+        Ok(RgbColor(red, green, blue))
+    }
+}
+
+impl<'a> Visitor<'a, u8> for HexColor {
+    fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
+        recognize(Token::Sharp, scanner)?;
+        let content = DataString::<&str>::accept(scanner)?.0;
+        let (red, green, blue) = (
+            u8::from_str_radix(&content[0..2], 16)?,
+            u8::from_str_radix(&content[2..4], 16)?,
+            u8::from_str_radix(&content[4..6], 16)?,
+        );
+        Ok(HexColor(red, green, blue))
+    }
+}
+```
+
+Then define the output `Color` type:
+
+```rust
+#[derive(Debug)]
+pub struct Color(u8, u8, u8);
+
+impl From<ColorInternal> for Color {
+    fn from(value: ColorInternal) -> Self {
+        match value {
+            ColorInternal::Rgb(rgb) => Color(rgb.0, rgb.1, rgb.2),
+            ColorInternal::Hex(hex) => Color(hex.0, hex.1, hex.2),
+            ColorInternal::Tuple(tuple) => Color(tuple.0, tuple.1, tuple.2),
+        }
+    }
+}
+```
+
+And finally define the `Color` visitor:
+
+```rust
+impl<'a> Visitor<'a, u8> for Color {
+    fn accept(scanner: &mut Scanner<u8>) -> ParseResult<Self> {
+        let color = Acceptor::new(scanner)
+            .try_or(ColorInternal::Hex)?
+            .try_or(ColorInternal::Rgb)?
+            .try_or(ColorInternal::Tuple)?
+            .finish()
+            .ok_or(UnexpectedToken)?;
+        Ok(color.into())
+    }
+}
+
+fn main() {
+    let data = b"rgb(255, 0, 0)";
+    let mut scanner = Scanner::new(data);
+    let result = Color::accept(&mut scanner);
+    println!("{:?}", result); // Ok(Color(255, 0, 0))
+
+    let data = b"#ff0000";
+    let mut scanner = Scanner::new(data);
+    let result = Color::accept(&mut scanner);
+    println!("{:?}", result); // Ok(Color(255, 0, 0))
+
+    let data = b"(255, 0, 0)";
+    let mut scanner = Scanner::new(data);
+    let result = Color::accept(&mut scanner);
+    println!("{:?}", result); // Ok(Color(255, 0, 0))
+}
+```

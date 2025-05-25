@@ -74,3 +74,104 @@ impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, &'a [T]> for M {
         ))
     }
 }
+
+/// A `Recognizer` is a type that wraps a `Scanner` and holds a successfully
+/// recognized value.
+///
+/// When a value is successfully recognized, the `Recognizer` stores the value in
+/// its `data` field and returns itself. If a value is not recognized, the
+/// `Recognizer` rewinds the scanner to the previous position and returns itself.
+///
+/// # Type Parameters
+///
+/// * `T` - The type of the data to scan.
+/// * `U` - The type of the value to recognize.
+/// * `'a` - The lifetime of the data to scan.
+/// * `'container` - The lifetime of the `Recognizer`.
+pub struct Recognizer<'a, 'container, T, U> {
+    data: Option<U>,
+    scanner: &'container mut Scanner<'a, T>,
+}
+
+impl<'a, 'b, T, U> Recognizer<'a, 'b, T, U> {
+    /// Create a new `Recognizer` with the given scanner.
+    ///
+    /// # Arguments
+    ///
+    /// * `scanner` - The scanner to use when recognizing input.
+    ///
+    /// # Returns
+    ///
+    /// A new `Recognizer` that uses the given scanner.
+    pub fn new(scanner: &'b mut Scanner<'a, T>) -> Self {
+        Recognizer {
+            data: None,
+            scanner,
+        }
+    }
+
+    /// Attempt to recognize a `U` using the given `element`, and return the
+    /// current recognizer if it fails.
+    ///
+    /// # Arguments
+    ///
+    /// * `element` - A `Recognizable` that recognizes a `U`.
+    ///
+    /// # Returns
+    ///
+    /// If the `U` is successfully recognized, returns the current recognizer with
+    /// the resulting value in `data`. If the `U` is not successfully recognized,
+    /// returns the current recognizer with the current position of the scanner
+    /// rewound to the position at which the `U` was attempted, and `data` is left
+    /// `None`.
+    pub fn try_or<R: Recognizable<'a, T, U>>(
+        mut self,
+        element: R,
+    ) -> ParseResult<Recognizer<'a, 'b, T, U>> {
+        // Propagate result
+        if self.data.is_some() {
+            return Ok(self);
+        }
+        // Or apply current recognizer
+        if let Some(found) = element.recognize(self.scanner)? {
+            self.data = Some(found);
+        }
+        Ok(self)
+    }
+
+    /// Consume the recognizer and return the `U` that was recognized if the
+    /// recognizer was successful.
+    ///
+    /// # Returns
+    ///
+    /// If the recognizer was successful (i.e., `data` is `Some`), returns the
+    /// `U` that was recognized. Otherwise, returns `None`.
+    pub fn finish(self) -> Option<U> {
+        self.data
+    }
+
+    /// Consume the recognizer and return the `U` that was recognized if the
+    /// recognizer was successful, or run the given closure if the recognizer was
+    /// not successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `closure` - A function that takes the `Scanner` and returns a
+    ///   `ParseResult<U>`.
+    ///
+    /// # Returns
+    ///
+    /// If the recognizer was successful (i.e., `data` is `Some`), returns the
+    /// `U` that was recognized. If the recognizer was not successful, the
+    /// `closure` is called with the `Scanner` and the result of the closure is
+    /// returned.
+    pub fn finish_with<F>(self, closure: F) -> ParseResult<U>
+    where
+        F: FnOnce(&mut Scanner<'a, T>) -> ParseResult<U>,
+    {
+        match self.data {
+            None => closure(self.scanner),
+            Some(token) => Ok(token),
+        }
+    }
+}
