@@ -79,7 +79,7 @@ impl<'a, T> Scanner<'a, T> {
     /// # Returns
     ///
     /// The original data given to the scanner.
-    pub fn data(&self) -> &[T] {
+    pub fn data(&self) -> &'a [T] {
         self.cursor.get_ref()
     }
 

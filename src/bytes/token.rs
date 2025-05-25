@@ -1,5 +1,8 @@
 use crate::bytes::matchers::match_char;
-use crate::matcher::Match;
+use crate::errors::ParseResult;
+use crate::matcher::{Match, MatchSize};
+use crate::recognizer::Recognizable;
+use crate::scanner::Scanner;
 
 /// The token type
 pub enum Token {
@@ -25,6 +28,10 @@ pub enum Token {
     Quote,
     /// The `"` character
     DoubleQuote,
+    /// The `=` character
+    Equal,
+    /// The `+` character
+    Plus,
 }
 
 impl Match<u8> for Token {
@@ -41,9 +48,13 @@ impl Match<u8> for Token {
             Token::Exclamation => match_char('!', data),
             Token::Quote => match_char('\'', data),
             Token::DoubleQuote => match_char('"', data),
+            Token::Equal => match_char('=', data),
+            Token::Plus => match_char('+', data),
         }
     }
+}
 
+impl MatchSize for Token {
     fn size(&self) -> usize {
         match self {
             Token::OpenParen => 1,
@@ -57,6 +68,22 @@ impl Match<u8> for Token {
             Token::Exclamation => 1,
             Token::Quote => 1,
             Token::DoubleQuote => 1,
+            Token::Equal => 1,
+            Token::Plus => 1,
         }
+    }
+} 
+
+impl<'a> Recognizable<'a, u8, &'a [u8]> for Token {
+    fn recognize(self, scanner: &mut Scanner<'a, u8>) -> ParseResult<Option<&'a [u8]>> {
+        let (result, size) = scanner.recognize(self)?;
+        if !result {
+            return Ok(None)
+        }
+        let current_position = scanner.current_position();
+        if !scanner.is_empty() {
+            scanner.bump_by(size);
+        }
+        Ok(Some(&scanner.data()[current_position..current_position + size]))
     }
 }
