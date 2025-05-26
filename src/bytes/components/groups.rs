@@ -233,9 +233,9 @@ impl<'a> Peekable<'a, u8, Token, Token> for GroupKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::bytes::components::groups::{match_for_delimited_group, match_group, GroupKind};
+    use crate::bytes::components::groups::{GroupKind, match_for_delimited_group, match_group};
     use crate::bytes::token::Token;
-    use crate::peek::{peek, PeekResult, Peeking};
+    use crate::peek::{PeekResult, Peeking, peek};
     use crate::scanner::Scanner;
 
     #[test]

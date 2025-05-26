@@ -1,6 +1,6 @@
 //! Classic tokens
 
-use crate::bytes::matchers::match_char;
+use crate::bytes::matchers::{match_char, match_pattern};
 use crate::matcher::{Match, MatchSize};
 
 #[derive(Copy, Clone)]
@@ -65,6 +65,14 @@ pub enum Token {
     Underscore,
     /// The `#` character
     Sharp,
+    /// The `\n` character
+    Ln,
+    /// The `\r` character
+    Cr,
+    /// The `\t` character
+    Tab,
+    /// The `\r\n` character
+    CrLn,
 }
 
 impl Match<u8> for Token {
@@ -99,6 +107,10 @@ impl Match<u8> for Token {
             Token::Backslash => match_char('\\', data),
             Token::Underscore => match_char('_', data),
             Token::Sharp => match_char('#', data),
+            Token::Ln => match_char('\n', data),
+            Token::Cr => match_char('\r', data),
+            Token::Tab => match_char('\t', data),
+            Token::CrLn => match_pattern(b"\r\n", data),
         }
     }
 }
@@ -135,6 +147,10 @@ impl MatchSize for Token {
             Token::Backslash => 1,
             Token::Underscore => 1,
             Token::Sharp => 1,
+            Token::Ln => 1,
+            Token::Cr => 1,
+            Token::Tab => 1,
+            Token::CrLn => 2,
         }
     }
 }
