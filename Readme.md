@@ -331,6 +331,7 @@ use noa_parser::matcher::{Match, MatchSize};
 use noa_parser::recognizer::Recognizer;
 use noa_parser::scanner::Scanner;
 
+#[derive(Debug)]
 enum OperatorTokens {
     /// The `==` operator.
     Equal,
@@ -365,7 +366,7 @@ fn main() -> ParseResult<()> {
         .finish()
         .ok_or(ParseError::UnexpectedToken)?;
 
-    println!("{}", String::from_utf8_lossy(recognized)); // ==
+    println!("{:?}", recognized); // ==
 
     let data = b"!= 2";
     let mut scanner = Scanner::new(data);
@@ -375,7 +376,7 @@ fn main() -> ParseResult<()> {
         .finish()
         .ok_or(ParseError::UnexpectedToken)?;
 
-    println!("{}", String::from_utf8_lossy(recognized)); // !=
+    println!("{:?}", recognized); // !=
 
     let data = b"> 2";
     let mut scanner = Scanner::new(data);

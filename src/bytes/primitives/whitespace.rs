@@ -15,6 +15,7 @@ pub struct OptionalWhitespaces;
 impl<'a> Visitor<'a, u8> for Whitespaces {
     fn accept(scanner: &mut Scanner<'a, u8>) -> ParseResult<Self> {
         let mut found = false;
+
         while Token::Whitespace.recognize(scanner)?.is_some() {
             found = true;
         }

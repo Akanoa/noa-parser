@@ -27,6 +27,19 @@ pub trait Recognizable<'a, T, V>: MatchSize {
     fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<V>>;
 }
 
+pub trait RecognizeSelf<'a, T, V>: MatchSize {
+    /// Try to recognize the object for the given scanner.
+    ///
+    /// # Arguments
+    /// * `scanner` - The scanner to recognize the object for.
+    ///
+    /// # Returns
+    /// * `Ok(Some(V))` if the object was recognized,
+    /// * `Ok(None)` if the object was not recognized,
+    /// * `Err(ParseError)` if an error occurred
+    fn recognize_self(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<V>>;
+}
+
 /// Recognize an object for the given scanner.
 ///
 /// # Type Parameters
@@ -60,8 +73,8 @@ pub fn recognize<'a, T, V, R: Recognizable<'a, T, V>>(
 
 /// Recognize an object for the given scanner.
 /// Return a slice of the recognized object.
-impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, &'a [T]> for M {
-    fn recognize(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<&'a [T]>> {
+impl<'a, T, M: Match<T> + MatchSize> RecognizeSelf<'a, T, M> for M {
+    fn recognize_self(self, scanner: &mut Scanner<'a, T>) -> ParseResult<Option<M>> {
         if scanner.is_empty() {
             return Err(ParseError::UnexpectedEndOfInput);
         }
@@ -72,13 +85,10 @@ impl<'a, T, M: Match<T> + MatchSize> Recognizable<'a, T, &'a [T]> for M {
         if !result {
             return Ok(None);
         }
-        let curent_position = scanner.current_position();
         if !scanner.is_empty() {
             scanner.bump_by(size);
         }
-        Ok(Some(
-            &scanner.data()[curent_position..curent_position + size],
-        ))
+        Ok(Some(self))
     }
 }
 
@@ -100,7 +110,7 @@ pub struct Recognizer<'a, 'container, T, U> {
     scanner: &'container mut Scanner<'a, T>,
 }
 
-impl<'a, 'b, T, U> Recognizer<'a, 'b, T, U> {
+impl<'a, 'b, T, R: RecognizeSelf<'a, T, R>> Recognizer<'a, 'b, T, R> {
     /// Create a new `Recognizer` with the given scanner.
     ///
     /// # Arguments
@@ -131,16 +141,13 @@ impl<'a, 'b, T, U> Recognizer<'a, 'b, T, U> {
     /// returns the current recognizer with the current position of the scanner
     /// rewound to the position at which the `U` was attempted, and `data` is left
     /// `None`.
-    pub fn try_or<R: Recognizable<'a, T, U>>(
-        mut self,
-        element: R,
-    ) -> ParseResult<Recognizer<'a, 'b, T, U>> {
+    pub fn try_or(mut self, element: R) -> ParseResult<Recognizer<'a, 'b, T, R>> {
         // Propagate result
         if self.data.is_some() {
             return Ok(self);
         }
         // Or apply current recognizer
-        if let Some(found) = element.recognize(self.scanner)? {
+        if let Some(found) = element.recognize_self(self.scanner)? {
             self.data = Some(found);
         }
         Ok(self)
@@ -153,7 +160,7 @@ impl<'a, 'b, T, U> Recognizer<'a, 'b, T, U> {
     ///
     /// If the recognizer was successful (i.e., `data` is `Some`), returns the
     /// `U` that was recognized. Otherwise, returns `None`.
-    pub fn finish(self) -> Option<U> {
+    pub fn finish(self) -> Option<R> {
         self.data
     }
 
@@ -172,13 +179,43 @@ impl<'a, 'b, T, U> Recognizer<'a, 'b, T, U> {
     /// `U` that was recognized. If the recognizer was not successful, the
     /// `closure` is called with the `Scanner` and the result of the closure is
     /// returned.
-    pub fn finish_with<F>(self, closure: F) -> ParseResult<U>
+    pub fn finish_with<F>(self, closure: F) -> ParseResult<R>
     where
-        F: FnOnce(&mut Scanner<'a, T>) -> ParseResult<U>,
+        F: FnOnce(&mut Scanner<'a, T>) -> ParseResult<R>,
     {
         match self.data {
             None => closure(self.scanner),
             Some(token) => Ok(token),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::bytes::token::Token;
+    use crate::errors::ParseResult;
+    use crate::recognizer::{RecognizeSelf, Recognizer};
+
+    #[test]
+    fn test_recognizer() {
+        let data = b">";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let result = Token::GreaterThan
+            .recognize_self(&mut scanner)
+            .expect("failed to parse");
+        assert_eq!(result, Some(Token::GreaterThan));
+    }
+
+    #[test]
+    fn test_recognizer_multiple() -> ParseResult<()> {
+        let data = b">>";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let result = Recognizer::new(&mut scanner)
+            .try_or(Token::LessThan)?
+            .try_or(Token::GreaterThan)?
+            .finish()
+            .expect("failed to parse");
+        assert_eq!(result, Token::GreaterThan);
+        Ok(())
     }
 }

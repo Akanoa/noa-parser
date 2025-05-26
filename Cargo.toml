@@ -1,6 +1,6 @@
 [package]
 name = "noa-parser"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 homepage = "https://github.com/Akanoa/noa-parser"
 repository = "https://github.com/Akanoa/noa-parser"
