@@ -7,4 +7,5 @@ pub mod peek;
 pub mod peeker;
 pub mod recognizer;
 pub mod scanner;
+pub mod separated_list;
 pub mod visitor;
