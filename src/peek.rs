@@ -5,7 +5,7 @@
 
 use crate::errors::ParseResult;
 use crate::matcher::MatchSize;
-use crate::recognizer::{recognize, Recognizable};
+use crate::recognizer::{Recognizable, recognize};
 use crate::scanner::Scanner;
 use std::marker::PhantomData;
 
