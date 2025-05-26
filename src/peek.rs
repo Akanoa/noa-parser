@@ -5,7 +5,7 @@
 
 use crate::errors::ParseResult;
 use crate::matcher::MatchSize;
-use crate::recognizer::{Recognizable, recognize};
+use crate::recognizer::RecognizeSelf;
 use crate::scanner::Scanner;
 use std::marker::PhantomData;
 
@@ -32,7 +32,14 @@ where
 {
     /// Get a slice of the data that was peeked.
     pub fn peeked_slice(&self) -> &'a [T] {
-        &self.data[0 + self.start.size()..self.end_slice - self.end.size()]
+        &self.data[self.start.size()..self.end_slice - self.end.size()]
+    }
+
+    /// Get the data that was peeked.
+    ///
+    /// Returns a reference to the underlying data that was peeked.
+    pub fn data(&self) -> &'a [T] {
+        self.data
     }
 }
 
@@ -142,9 +149,18 @@ pub struct Until<'a, T, V> {
     _marker: PhantomData<&'a T>,
 }
 
+impl<'a, T, V> Until<'a, T, V> {
+    pub fn new(element: V) -> Until<'a, T, V> {
+        Until {
+            element,
+            _marker: PhantomData,
+        }
+    }
+}
+
 impl<'a, T, V> Peekable<'a, T, V, V> for Until<'a, T, V>
 where
-    V: Recognizable<'a, T, V> + Clone,
+    V: RecognizeSelf<'a, T, V> + Clone,
 {
     /// Peek until the given `element` is found in the `Scanner`.
     ///
@@ -166,13 +182,17 @@ where
         // create a temporary scanner to peek data
         let mut scanner = Scanner::new(data.data());
         while !scanner.is_empty() {
-            match recognize(self.element.clone(), &mut scanner) {
-                Ok(_element) => {
+            match self.element.clone().recognize_self(&mut scanner) {
+                Ok(Some(element)) => {
                     return Ok(PeekResult::Found {
                         end_slice: scanner.current_position() - self.element.size(),
-                        start: self.element.clone(),
-                        end: self.element.clone(),
+                        start: element.clone(),
+                        end: element.clone(),
                     });
+                }
+                Ok(None) => {
+                    scanner.bump_by(1);
+                    continue;
                 }
                 Err(_err) => {
                     scanner.bump_by(1);
@@ -211,5 +231,22 @@ impl<'a> Peekable<'a, u8, (), ()> for UntilEnd<u8> {
             start: (),
             end: (),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::bytes::token::Token;
+    use crate::peek::{peek, Until};
+
+    #[test]
+    fn test_until() {
+        let data = b"abc|fdgf";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let token = Until::new(Token::Pipe);
+        let peeked = peek(token, &mut scanner)
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(peeked.data(), "abc".as_bytes());
     }
 }
