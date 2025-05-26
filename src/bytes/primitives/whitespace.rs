@@ -27,6 +27,9 @@ impl<'a> Visitor<'a, u8> for Whitespaces {
 
 impl<'a> Visitor<'a, u8> for OptionalWhitespaces {
     fn accept(scanner: &mut Scanner<'a, u8>) -> ParseResult<Self> {
+        if scanner.is_empty() {
+            return Ok(OptionalWhitespaces);
+        }
         while Token::Whitespace.recognize(scanner)?.is_some() {}
         Ok(OptionalWhitespaces)
     }

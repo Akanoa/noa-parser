@@ -18,7 +18,6 @@ impl<'a> Visitor<'a, u8> for Data<'a> {
     }
 }
 
-
 fn main() {
     let data = b"     data    ";
     let mut scanner = Scanner::new(data);
