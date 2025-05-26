@@ -1,5 +1,9 @@
 # Changelog
 
+**0.7.2**
+
+- Fix Until behavior
+
 **0.7.1**
 
 - Fix UntilEnd behavior

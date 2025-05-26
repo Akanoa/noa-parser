@@ -180,7 +180,8 @@ where
     /// `Scanner`, or an `Err` otherwise.
     fn peek(&self, data: &Scanner<'a, T>) -> ParseResult<PeekResult<V, V>> {
         // create a temporary scanner to peek data
-        let mut scanner = Scanner::new(data.data());
+        let remaining = &data.data()[data.current_position()..];
+        let mut scanner = Scanner::new(remaining);
         while !scanner.is_empty() {
             match self.element.clone().recognize_self(&mut scanner) {
                 Ok(Some(element)) => {
