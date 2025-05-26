@@ -4,13 +4,13 @@ use crate::scanner::Scanner;
 
 /// A [Peeker] is a type that is used to find the best group to forecast
 pub struct Peeker<'a, 'b, T, S, E> {
-    scanner: &'b mut Scanner<'a, T>,
+    scanner: &'b Scanner<'a, T>,
     /// Pool of [Peekable]
-    peekables: Vec<Box<dyn Peekable<'a, T, S, E>>>,
+    peekables: Vec<Box<dyn Peekable<'a, T, S, E> + 'a>>,
 }
 
 impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
-    pub fn new(scanner: &'b mut Scanner<'a, T>) -> Self {
+    pub fn new(scanner: &'b Scanner<'a, T>) -> Self {
         Self {
             scanner,
             peekables: vec![],
@@ -20,13 +20,13 @@ impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
 
 impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
     /// Add new [Peekable] element to the peeking pool
-    pub fn add_peekable<F: Peekable<'a, T, S, E> + 'static>(mut self, forecastable: F) -> Self {
-        self.peekables.push(Box::new(forecastable));
+    pub fn add_peekable<F: Peekable<'a, T, S, E> + 'a>(mut self, peekable: F) -> Self {
+        self.peekables.push(Box::new(peekable));
         self
     }
 
     /// Run the [Forecast] pool, find the minimal group
-    pub fn forecast(self) -> ParseResult<Option<Peeking<'b, T, S, E>>> {
+    pub fn peek(self) -> ParseResult<Option<Peeking<'b, T, S, E>>> {
         let mut result = None;
         // on boucle sur les possibilités de prédictions
         for peekable in self.peekables.into_iter() {
@@ -70,5 +70,38 @@ impl<'a, 'b, T, S, E> Peeker<'a, 'b, T, S, E> {
             }
         }
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::bytes::token::Token;
+    use crate::peek::{Until, UntilEnd};
+    use crate::peeker::Peeker;
+    use crate::scanner::Scanner;
+
+    #[test]
+    fn test_peeker() {
+        let data = b"data\n";
+        let mut scanner = Scanner::new(data);
+        let peeker = Peeker::new(&mut scanner)
+            .add_peekable(Until::new(Token::Ln))
+            .add_peekable(UntilEnd::default());
+        let result = peeker
+            .peek()
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(result.data, "data".as_bytes());
+
+        let data = b"data";
+        let mut scanner = Scanner::new(data);
+        let peeker = Peeker::new(&mut scanner)
+            .add_peekable(Until::new(Token::Ln))
+            .add_peekable(UntilEnd::default());
+        let result = peeker
+            .peek()
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(result.data, "data".as_bytes());
     }
 }

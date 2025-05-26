@@ -1,5 +1,9 @@
 # Changelog
 
+**0.7.3**
+
+- Relax Peeker lifetime
+
 **0.7.2**
 
 - Fix Until behavior

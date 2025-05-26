@@ -214,31 +214,10 @@ where
 #[derive(Default)]
 pub struct UntilEnd<T>(PhantomData<T>);
 
-impl<'a> Peekable<'a, u8, (), ()> for UntilEnd<u8> {
-    /// Peeks at the current position of the `Scanner` until it reaches the end
-    /// of the data.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - The `Scanner` to use when matching.
-    ///
-    /// # Returns
-    ///
-    /// A `PeekResult` where the `end_slice` is the current position of the
-    /// `Scanner`, and `start` and `end` are both `()`.
-    fn peek(&self, data: &Scanner<'a, u8>) -> ParseResult<PeekResult<(), ()>> {
-        Ok(PeekResult::Found {
-            end_slice: data.remaining().len(),
-            start: (),
-            end: (),
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
-    use crate::peek::{peek, Until, UntilEnd};
+    use crate::peek::{Until, UntilEnd, peek};
 
     #[test]
     fn test_until() {
