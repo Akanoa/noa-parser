@@ -24,6 +24,7 @@ impl MatchSize for TokenNumber {
 }
 
 /// Define how to accept the token number.
+#[derive(Debug, PartialEq)]
 pub struct Number<T>(pub T);
 
 /// Implement the `Visitor` trait for the token number.
