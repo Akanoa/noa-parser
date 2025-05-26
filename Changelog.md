@@ -1,5 +1,9 @@
 # Changelog
 
+**0.7.1**
+
+- Fix UntilEnd behavior
+
 **0.7.0**
 
 - Allow to peek until a specific element

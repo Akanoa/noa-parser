@@ -227,7 +227,7 @@ impl<'a> Peekable<'a, u8, (), ()> for UntilEnd<u8> {
     /// `Scanner`, and `start` and `end` are both `()`.
     fn peek(&self, data: &Scanner<'a, u8>) -> ParseResult<PeekResult<(), ()>> {
         Ok(PeekResult::Found {
-            end_slice: data.current_position(),
+            end_slice: data.remaining().len(),
             start: (),
             end: (),
         })
@@ -237,7 +237,7 @@ impl<'a> Peekable<'a, u8, (), ()> for UntilEnd<u8> {
 #[cfg(test)]
 mod tests {
     use crate::bytes::token::Token;
-    use crate::peek::{peek, Until};
+    use crate::peek::{peek, Until, UntilEnd};
 
     #[test]
     fn test_until() {
@@ -248,5 +248,16 @@ mod tests {
             .expect("failed to parse")
             .expect("failed to peek");
         assert_eq!(peeked.data(), "abc".as_bytes());
+    }
+
+    #[test]
+    fn test_until_end() {
+        let data = b"abc|fdgf";
+        let mut scanner = crate::scanner::Scanner::new(data);
+        let token = UntilEnd::default();
+        let peeked = peek(token, &mut scanner)
+            .expect("failed to parse")
+            .expect("failed to peek");
+        assert_eq!(peeked.data, "abc|fdgf".as_bytes());
     }
 }
