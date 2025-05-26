@@ -11,6 +11,7 @@ This data can be bytes, chars or any other type.
 The scanner is the building block around which parsers are built.
 
 It provides basic operations such as:
+
 - bumping the cursor
 - get the current position
 - remaining data to be scanned
@@ -33,6 +34,7 @@ fn main() {
 Parsing data involves recognizing a pattern in the data.
 
 To help this recognition. The framework provides two traits:
+
 - `Match` : defines how to recognize a pattern
 - `MatchSize` : defines how to get the size of a pattern recognized
 
@@ -57,7 +59,7 @@ pub trait MatchSize {
 
 ### Usage
 
-For example, if you want to recognize the turbofish pattern "::<>". 
+For example, if you want to recognize the turbofish pattern "::<>".
 
 You want that all characters to be matched.
 
@@ -115,7 +117,8 @@ You need an object able to match a sequence of digits.
 
 Because it's a common operation, the framework provides a builtin function to do it: `match_number`.
 
-As soon an object implements `Match` and `MatchSize`, it also implements `Recognizable` and can be used to recognize a number.
+As soon an object implements `Match` and `MatchSize`, it also implements `Recognizable` and can be used to recognize a
+number.
 
 ```rust
 use noa_parser::matcher::MatchSize;
@@ -181,9 +184,11 @@ fn main() {
 
 ## Visitor
 
-`Recognizable` is a trait that allows you to recognize a pattern. But most of the time you want to recognize a succession of patterns.
+`Recognizable` is a trait that allows you to recognize a pattern. But most of the time you want to recognize a
+succession of patterns.
 
-Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tries to determine whether the pattern is present or not.
+Like the `Recognizable` trait, `Visitor` takes the scanner as an argument and tries to determine whether the pattern is
+present or not.
 
 ```rust
 use noa_parser::matcher::MatchSize;
@@ -219,9 +224,11 @@ But, unlike `Recognizable`, you can call a `Visitor` inside another `Visitor` to
 
 For example, "::<45>", the data wanted are the number "45", but embedded in the turbofish operator.
 
-Because recognizing numbers is a common operation, the framework provides a builtin `Number` object which implements `Visitor` to recognize a number.
+Because recognizing numbers is a common operation, the framework provides a builtin `Number` object which implements
+`Visitor` to recognize a number.
 
-So to recognize a turbofish value, you have to recognize the start of the turbofish operator "::<", then the number, and then the end of the turbofish operator ">".
+So to recognize a turbofish value, you have to recognize the start of the turbofish operator "::<", then the number, and
+then the end of the turbofish operator ">".
 
 The recognition of the number is done by calling the `accept` method of the `Number` object.
 
@@ -275,7 +282,7 @@ struct Turbofish(usize);
 struct TurbofishStartTokens;
 
 // Implement the `Visitor` trait for the turbofish operator start tokens.
-impl <'a> Visitor<'a, u8> for TurbofishStartTokens {
+impl<'a> Visitor<'a, u8> for TurbofishStartTokens {
     fn accept(scanner: &mut Scanner<'a, u8>) -> ParseResult<Self> {
         // recognize the turbofish operator start "::<".
         recognize(Token::Colon, scanner)?;
@@ -357,7 +364,7 @@ fn main() -> ParseResult<()> {
         .try_or(OperatorTokens::Equal)?
         .finish()
         .ok_or(ParseError::UnexpectedToken)?;
-    
+
     println!("{}", String::from_utf8_lossy(recognized)); // ==
 
     let data = b"!= 2";
@@ -392,6 +399,7 @@ When the recognizer is not enough, you need to check several visitors.
 That's the purpose of the `Acceptor` object.
 
 For example, colors can be defined in different ways.
+
 - #ff0000
 - (255, 0, 0)
 - rgb(255, 0, 0)
@@ -400,7 +408,8 @@ If your parser wants to accept every pattern, you must test them successively th
 
 To achieve this, the framework provides an object called `Acceptor` which takes several `Visitor`.
 
-Because of rust, all your results must be of the same type. So is a union as the form of an enumeration of visitable types.
+Because of rust, all your results must be of the same type. So is a union as the form of an enumeration of visitable
+types.
 
 Here:
 
@@ -539,3 +548,44 @@ fn main() {
     println!("{:?}", result); // Ok(Color(255, 0, 0))
 }
 ```
+
+## Delimited groups
+
+Sometimes parsing involves nested datastructures where parse are embedded in other parse.
+
+If you have this expression: "1 + (2 * 3)", you first need to discover all binary groups, here
+
+- "Num(1) + Group(2 * 3)"'
+- "Num(2) * Num(3)"
+
+To be able to resolve the whole expression, you first need to understand the concept of group between parenthesis, get
+the inner expression, then parse it.
+
+That's the purpose of the `peek` function.
+
+It takes a `Peekable` object and try to get the substring that matches the given `Peekable`.
+
+The framework provides two `Peekable` implementations:
+
+- `GroupKind::Parenthesis` : A group enclosed in parentheses
+- `GroupKind::Quotes` : A group enclosed in single quotes, the backslash `\'` is escaped
+- `GroupKind::DoubleQuotes` : A group enclosed in double quotes, the backslash `\"` is escaped
+- `Until` : A group until the given `Recognizable`
+- `UntilEnd` : A group until the end of the input
+
+```rust
+use noa_parser::bytes::components::groups::GroupKind;
+use noa_parser::peek::peek;
+
+fn main() {
+    let data = b"(2 * 3)";
+    let mut scanner = noa_parser::scanner::Scanner::new(data);
+    let result = peek(GroupKind::Parenthesis, &mut scanner).expect("failed to parse").expect("failed to peek");
+    println!(
+        "{}",
+        String::from_utf8_lossy(result.peeked_slice()) // 2 * 3
+    );
+}
+```
+
+An example of the peeking usage is available in the [expression](examples/expression.rs) example.

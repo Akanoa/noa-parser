@@ -3,7 +3,9 @@
 use crate::bytes::matchers::match_char;
 use crate::matcher::{Match, MatchSize};
 
+#[derive(Copy, Clone)]
 /// The token type
+#[derive(PartialEq, Debug)]
 pub enum Token {
     /// The "(" character
     OpenParen,

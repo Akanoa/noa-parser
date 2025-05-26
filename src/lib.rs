@@ -1,10 +1,10 @@
-
 #![doc = include_str!("../Readme.md")]
 pub mod acceptor;
 pub mod bytes;
 pub mod errors;
 pub mod matcher;
 pub mod peek;
+pub mod peeker;
 pub mod recognizer;
 pub mod scanner;
 pub mod visitor;
