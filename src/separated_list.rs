@@ -3,8 +3,9 @@ use crate::scanner::Scanner;
 use crate::visitor::Visitor;
 use std::marker::PhantomData;
 
+#[derive(Debug)]
 pub struct SeparatedList<T, V, S> {
-    pub(crate) data: Vec<V>,
+    pub data: Vec<V>,
     separator: PhantomData<(S, T)>,
 }
 
@@ -92,6 +93,14 @@ where
         let mut elements = vec![];
         let cursor = scanner.current_position();
 
+        // if the scanner is empty, return an empty list
+        if scanner.remaining().is_empty() {
+            return Ok(SeparatedList {
+                data: elements,
+                separator: PhantomData,
+            });
+        }
+
         loop {
             if let Ok(result) = yield_element::<T, V, S>(scanner) {
                 let element: YieldResult<V> = result;
@@ -154,5 +163,12 @@ mod tests {
             vec![Number(12), Number(4), Number(78), Number(22)]
         );
         assert_eq!(scanner.current_position(), 10);
+
+        let data = b"";
+        let mut scanner = Scanner::new(data);
+        let result = scanner
+            .visit::<SeparatedList<u8, Number<usize>, SeparatorComma>>()
+            .expect("failed to parse");
+        assert_eq!(result.data, vec![]);
     }
 }

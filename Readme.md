@@ -590,3 +590,48 @@ fn main() {
 ```
 
 An example of the peeking usage is available in the [expression](examples/expression.rs) example.
+
+## Separated List
+
+The `SeparatedList` component is used to parse a list of elements separated by a separator.
+
+If you have this expression: "1 + 2 + 3 + 4", you want to get all the numbers.
+
+The data are separated by the ` + ` pattern.
+
+The `SeparatedList` takes two `Visitor` as type parameters:
+
+- The element visitor : the one that will be used to parse each element of the list
+- The separator visitor : the one that will be used to parse the separator between each element of the list
+
+Once one of parsers fails, the `SeparatedList` will stop parsing the list and return the result.
+
+```rust
+use noa_parser::bytes::primitives::number::Number;
+use noa_parser::bytes::token::Token;
+use noa_parser::errors::ParseResult;
+use noa_parser::recognizer::recognize;
+use noa_parser::scanner::Scanner;
+use noa_parser::separated_list::SeparatedList;
+use noa_parser::visitor::Visitor;
+
+#[derive(Debug)]
+struct Separator;
+
+impl<'a> Visitor<'a, u8> for Separator {
+    fn accept(scanner: &mut noa_parser::scanner::Scanner<u8>) -> ParseResult<Self> {
+        recognize(Token::Tilde, scanner)?;
+        recognize(Token::Tilde, scanner)?;
+        recognize(Token::Tilde, scanner)?;
+        Ok(Separator)
+    }
+}
+
+fn main() {
+    let data = b"1~~~2~~~3~~~4";
+    let mut scanner = Scanner::new(data);
+    let result =
+        SeparatedList::<u8, Number<usize>, Separator>::accept(&mut scanner).map(|x| x.data);
+    println!("{:?}", result); // Ok([Number(1), Number(2), Number(3), Number(4)])
+}
+```
